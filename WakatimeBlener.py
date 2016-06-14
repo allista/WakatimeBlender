@@ -17,14 +17,14 @@ __version__ = '1.0.0'
 
 bl_info = \
     {
-        "name":     "Wakatime plugin for Blender",
-        "category": "Development",
-        "author":   "Allis Tauri <allista@gmail.com>",
-        "version": (1, 0),
-        "blender": (2, 77, 0),
-        "description": "Submit your working stats to Wakatime online service.",
-        "warning": "Beta",
-        # "tracker_url": "https://developer.blender.org/maniphest/task/create/?project=3&type=Bug",
+        "name":        "Wakatime plugin for Blender",
+        "category":    "Development",
+        "author":      "Allis Tauri <allista@gmail.com>",
+        "version":     (1, 0),
+        "blender":     (2, 77, 0),
+        "description": "Submits your working stats to the Wakatime time tracking service.",
+        "warning":     "Beta",
+        "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
     }
 
 # globals
