@@ -2,7 +2,7 @@
 
 ###Installation
 
-To install the plugin you need, in fact, only the WakatimeBlender.py file. 
+To install the plugin you need, in fact, only the [WakaTime.py](https://github.com/allista/WakatimeBlender/raw/master/WakaTime.py) file.
 Download it somewhere, open the Blender, go to *File->User Preferences->Add-ons->Install from file*, then check the tick-box near the plugin name in the list to enable it. Finally, push *Save User Settings*.
 
 ![Installation](http://i.imgur.com/3ZtsKpb.png)
