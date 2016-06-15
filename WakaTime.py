@@ -13,14 +13,14 @@ from configparser import ConfigParser
 from subprocess import Popen, STDOUT, PIPE
 from queue import Queue, Empty
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 bl_info = \
     {
         "name":        "Wakatime plugin for Blender",
         "category":    "Development",
         "author":      "Allis Tauri <allista@gmail.com>",
-        "version":     (1, 0),
+        "version":     (1, 0, 1),
         "blender":     (2, 77, 0),
         "description": "Submits your working stats to the Wakatime time tracking service.",
         "warning":     "Beta",
@@ -34,25 +34,21 @@ _hb_processor = None
 _last_hb = None
 _filename = ''
 
+REGISTERED = False
+SHOW_KEY_DIALOG = False
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
 API_CLIENT_URL = 'https://github.com/wakatime/wakatime/archive/master.zip'
 API_CLIENT = os.path.join(PLUGIN_DIR, 'wakatime-master', 'wakatime', 'cli.py')
-SETTINGS_FILE = os.path.join(PLUGIN_DIR, 'wakatime.ini')
+SETTINGS_FILE = os.path.join(os.path.expanduser('~'), '.wakatime.cfg')
 SETTINGS = None
-settings = None
+settings = 'settings'
+blender  = 'blender'
 
 # Log Levels
 DEBUG   = 'DEBUG'
 INFO    = 'INFO'
 WARNING = 'WARNING'
 ERROR   = 'ERROR'
-
-# add wakatime package to path
-sys.path.insert(0, os.path.join(PLUGIN_DIR, 'packages'))
-try:
-    from wakatime.base import parseConfigFile
-except ImportError:
-    pass
 
 
 def u(text):
@@ -67,7 +63,7 @@ def u(text):
 
 
 def log(lvl, message, *args, **kwargs):
-    if lvl == DEBUG and not settings.getboolean('debug'): return
+    if lvl == DEBUG and not SETTINGS.getboolean(blender, 'debug'): return
     msg = message
     if len(args) > 0: msg = message.format(*args)
     elif len(kwargs) > 0: msg = message.format(**kwargs)
@@ -76,34 +72,35 @@ def log(lvl, message, *args, **kwargs):
 
 class API_Key_Dialog(bpy.types.Operator):
     bl_idname = "ui.wakatime_api_key_dialog"
-    bl_label = "Enter WakaTime API Key"
-    api_key = StringProperty(name="API Key")
-    default_key = ''
+    bl_label  = "Enter WakaTime API Key"
+    api_key   = StringProperty(name="API Key")
+    is_shown  = False
+
+    @classmethod
+    def show(cls):
+        global SHOW_KEY_DIALOG
+        if not cls.is_shown and REGISTERED:
+            cls.is_shown = True
+            SHOW_KEY_DIALOG = False
+            bpy.ops.ui.wakatime_api_key_dialog('INVOKE_DEFAULT')
 
     def execute(self, context):
         if self.api_key:
-            settings['api_key'] = str(self.api_key)
+            SETTINGS.set(settings, 'api_key', u(self.api_key))
             save_settings()
+        API_Key_Dialog.is_shown = False
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.api_key = settings.get('api_key', fallback='')
+        self.api_key = SETTINGS.get(settings, 'api_key', fallback='')
         return context.window_manager.invoke_props_dialog(self)
 
 
-class HeartbeatsSender(object):
-    def __init__(self, heartbeat):
+class HeartbeatQueueProcessor(threading.Thread):
+    def __init__(self, q):
         threading.Thread.__init__(self)
-        self.debug   = settings.getboolean('debug')
-        self.api_key = settings.get('api_key', fallback='')
-        self.ignore  = settings.get('ignore', fallback=[])
-        self.heartbeat = heartbeat
-        self.has_extra_heartbeats = False
-        self.extra_heartbeats = []
-
-    def add_extra_heartbeats(self, extra_heartbeats):
-        self.has_extra_heartbeats = len(extra_heartbeats) > 0
-        self.extra_heartbeats = extra_heartbeats
+        self.daemon = True
+        self._queue = q
 
     @staticmethod
     def obfuscate_apikey(command_list):
@@ -117,36 +114,39 @@ class HeartbeatsSender(object):
             cmd[apikey_index] = 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX' + cmd[apikey_index][-4:]
         return cmd
 
-    def send(self):
-        ua = '"blender/%s blender-wakatime/%s"' % (bpy.app.version_string, __version__)
+    @classmethod
+    def send(cls, heartbeat, extra_heartbeats=[]):
+        global SHOW_KEY_DIALOG
+        ua = '"blender/%s blender-wakatime/%s"' % (bpy.app.version_string.split()[0], __version__)
         cmd = [
             bpy.app.binary_path_python,
             API_CLIENT,
-            '--entity', self.heartbeat['entity'],
-            '--time', str('%f' % self.heartbeat['timestamp']),
+            '--entity', heartbeat['entity'],
+            '--time', str('%f' % heartbeat['timestamp']),
             '--plugin', ua,
         ]
-        if self.api_key:
-            cmd.extend(['--key', str(bytes.decode(self.api_key.encode('utf8')))])
-        if self.heartbeat['is_write']:
+        api_key = SETTINGS.get(settings, 'api_key', fallback='')
+        if api_key:
+            cmd.extend(['--key', str(bytes.decode(api_key.encode('utf8')))])
+        if heartbeat['is_write']:
             cmd.append('--write')
-        for pattern in self.ignore:
+        for pattern in SETTINGS.get(settings, 'ignore', fallback=[]):  # or should it be blender-specific?
             cmd.extend(['--ignore', pattern])
-        if self.debug:
+        if SETTINGS.getboolean(blender, 'debug'):
             cmd.append('--verbose')
-        if self.has_extra_heartbeats:
+        if extra_heartbeats:
             cmd.append('--extra-heartbeats')
+            extra_heartbeats = json.dumps(extra_heartbeats)
             stdin = PIPE
-            extra_heartbeats = json.dumps(self.extra_heartbeats)
         else:
             extra_heartbeats = None
             stdin = None
 
-        log(DEBUG, ' '.join(self.obfuscate_apikey(cmd)))
+        log(DEBUG, ' '.join(cls.obfuscate_apikey(cmd)))
         try:
             process = Popen(cmd, stdin=stdin, stdout=PIPE, stderr=STDOUT)
             inp = None
-            if self.has_extra_heartbeats:
+            if extra_heartbeats:
                 inp = "{0}\n".format(extra_heartbeats)
                 inp = inp.encode('utf-8')
             output, err = process.communicate(input=inp)
@@ -154,6 +154,10 @@ class HeartbeatsSender(object):
             retcode = process.poll()
             if (not retcode or retcode == 102) and not output:
                 log(DEBUG, 'OK')
+            elif retcode == 104:  # wrong API key
+                log(ERROR, 'Wrong API key. Asking for a new one...')
+                SETTINGS.set(settings, 'api_key', '')
+                SHOW_KEY_DIALOG = True
             else:
                 log(ERROR, 'Error')
             if retcode:
@@ -163,31 +167,19 @@ class HeartbeatsSender(object):
         except:
             log(ERROR, u(sys.exc_info()[1]))
 
-
-class HeartbeatQueueProcessor(threading.Thread):
-    def __init__(self, q):
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self._queue = q
-
     def run(self):
         while True:
             time.sleep(1)
-            if 'api_key' not in settings: continue
+            if not SETTINGS.get(settings, 'api_key', fallback=''): continue
             try: heartbeat = self._queue.get_nowait()
             except Empty: continue
             if heartbeat is None: return
-            has_extra_heartbeats = False
             extra_heartbeats = []
             try:
                 while True:
                     extra_heartbeats.append(self._queue.get_nowait())
-                    has_extra_heartbeats = True
             except Empty: pass
-            sender = HeartbeatsSender(heartbeat)
-            if has_extra_heartbeats:
-                sender.add_extra_heartbeats(extra_heartbeats)
-            sender.send()
+            self.send(heartbeat, extra_heartbeats)
 
 
 class DownloadWakatime(threading.Thread):
@@ -215,24 +207,18 @@ def save_settings():
 
 
 def setup():
-    global SETTINGS, settings, _hb_processor
+    global SETTINGS, _hb_processor
     download = DownloadWakatime()
     download.start()
     SETTINGS = ConfigParser()
-    SETTINGS.read(os.path.join(PLUGIN_DIR, SETTINGS_FILE))
-    if not SETTINGS.has_section('settings'):
-        log(INFO, 'Creating default config...')
-        SETTINGS.add_section('settings')
-        SETTINGS.set('settings', 'debug', str(False))
-        SETTINGS.set('settings', 'hidefilenames', str(False))
-    settings = SETTINGS['settings']
-    try:
-        configs = parseConfigFile()
-        if configs is not None:
-            if configs.has_option('settings', 'api_key'):
-                API_Key_Dialog.default_key = configs.get('settings', 'api_key')
-                log(INFO, 'Found default API key.')
-    except: pass
+    SETTINGS.read(SETTINGS_FILE)
+    #common wakatime settings
+    if not SETTINGS.has_section(settings):
+        SETTINGS.add_section(settings)
+    #plugin-specific configuration
+    if not SETTINGS.has_section(blender):
+        SETTINGS.add_section(blender)
+        SETTINGS.set(blender, 'debug', str(False))
     _hb_processor = HeartbeatQueueProcessor(_heartbeats)
     _hb_processor.start()
 
@@ -262,6 +248,8 @@ def enough_time_passed(now, is_write):
 
 def handle_activity(is_write=False):
     global _last_hb
+    if SHOW_KEY_DIALOG or not SETTINGS.get(settings, 'api_key', fallback=''):
+        API_Key_Dialog.show()
     timestamp = time.time()
     last_file = _last_hb['entity'] if _last_hb is not None else ''
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
@@ -270,24 +258,28 @@ def handle_activity(is_write=False):
 
 
 def register():
+    global  REGISTERED
     log(INFO, 'Initializing WakaTime plugin v%s' % __version__)
+    setup()
     bpy.utils.register_module(__name__)
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
     bpy.app.handlers.scene_update_post.append(activity_handler)
-    setup()
+    REGISTERED = True
 
 
 def unregister():
-    save_settings()
+    global REGISTERED
     log(INFO, 'Unregistering WakaTime plugin v%s' % __version__)
-    _heartbeats.put_nowait(None)
-    _heartbeats.task_done()
-    _hb_processor.join()
+    save_settings()
+    REGISTERED = False
     bpy.app.handlers.load_post.remove(load_handler)
     bpy.app.handlers.save_post.remove(save_handler)
     bpy.app.handlers.scene_update_post.remove(activity_handler)
     bpy.utils.unregister_module(__name__)
+    _heartbeats.put_nowait(None)
+    _heartbeats.task_done()
+    _hb_processor.join()
 
 
 if __name__ == '__main__':
