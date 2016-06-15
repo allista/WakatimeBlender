@@ -102,18 +102,6 @@ class HeartbeatQueueProcessor(threading.Thread):
         self.daemon = True
         self._queue = q
 
-    @staticmethod
-    def obfuscate_apikey(command_list):
-        cmd = list(command_list)
-        apikey_index = None
-        for num in range(len(cmd)):
-            if cmd[num] == '--key':
-                apikey_index = num + 1
-                break
-        if apikey_index is not None and apikey_index < len(cmd):
-            cmd[apikey_index] = 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX' + cmd[apikey_index][-4:]
-        return cmd
-
     @classmethod
     def send(cls, heartbeat, extra_heartbeats=[]):
         global SHOW_KEY_DIALOG
@@ -125,9 +113,6 @@ class HeartbeatQueueProcessor(threading.Thread):
             '--time', str('%f' % heartbeat['timestamp']),
             '--plugin', ua,
         ]
-        api_key = SETTINGS.get(settings, 'api_key', fallback='')
-        if api_key:
-            cmd.extend(['--key', str(bytes.decode(api_key.encode('utf8')))])
         if heartbeat['is_write']:
             cmd.append('--write')
         for pattern in SETTINGS.get(settings, 'ignore', fallback=[]):  # or should it be blender-specific?
@@ -141,8 +126,7 @@ class HeartbeatQueueProcessor(threading.Thread):
         else:
             extra_heartbeats = None
             stdin = None
-
-        log(DEBUG, ' '.join(cls.obfuscate_apikey(cmd)))
+        log(DEBUG, ' '.join(cmd))
         try:
             process = Popen(cmd, stdin=stdin, stdout=PIPE, stderr=STDOUT)
             inp = None
