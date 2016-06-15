@@ -67,11 +67,10 @@ def log(lvl, message, *args, **kwargs):
     print('[WakaTime] [{lvl}] {msg}'.format(lvl=lvl, msg=msg))
 
 
-class API_Key_Dialog(bpy.types.Operator):
+class ApiKeyDialog(bpy.types.Operator):
     bl_idname = "ui.wakatime_api_key_dialog"
-    bl_label = "Enter WakaTime API Key"
+    bl_label = "WakaTime API Key"
     api_key = StringProperty(name="API Key")
-    default_key = ''
 
     def execute(self, context):
         if self.api_key:
@@ -211,16 +210,9 @@ def setup():
     global SETTINGS, _hb_processor
     download = DownloadWakatime()
     download.start()
-    try:
-        SETTINGS = parseConfigFile(configFile=SETTINGS_FILE)
-    except: pass
-    if SETTINGS is not None and SETTINGS.has_option('settings', 'api_key'):
-        API_Key_Dialog.default_key = SETTINGS.get('settings', 'api_key')
-        log(INFO, 'Found default API key.')
-    if not SETTINGS.get('settings', 'api_key'):
-        # TODO: prompt for api key
-        # API_Key_Dialog()
-        pass
+    SETTINGS = parseConfigFile(configFile=SETTINGS_FILE)
+    if not SETTINGS.has_section('settings'):
+        SETTINGS.add_section('settings')
     _hb_processor = HeartbeatQueueProcessor(_heartbeats)
     _hb_processor.start()
 

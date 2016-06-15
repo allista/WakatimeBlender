@@ -7,7 +7,7 @@ Download it somewhere, open the Blender, go to *File->User Preferences->Add-ons-
 
 ![Installation](http://i.imgur.com/3ZtsKpb.png)
 
-After that you will need to hit Space to open the floating menu and start to type "Waka" so that the entry "Enter WakaTime API Key" is shown. Select it and enter your key.
+After that you will need to hit Space to open the floating menu and start to type "Waka" so that the entry "WakaTime API Key" is shown. Select it and enter your key.
 
 ![Setup API Key](http://i.imgur.com/if3PLTC.png)
 
