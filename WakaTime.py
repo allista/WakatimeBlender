@@ -10,12 +10,9 @@ import threading
 import traceback
 from urllib import request
 from zipfile import ZipFile
+import configparser
 from subprocess import Popen, STDOUT, PIPE
 from queue import Queue, Empty
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
 
 __version__ = '1.0.0'
 
