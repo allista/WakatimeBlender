@@ -7,11 +7,15 @@ import os
 import sys
 import time
 import threading
+import traceback
 from urllib import request
 from zipfile import ZipFile
-from configparser import ConfigParser
 from subprocess import Popen, STDOUT, PIPE
 from queue import Queue, Empty
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 __version__ = '1.0.0'
 
@@ -37,22 +41,14 @@ _filename = ''
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
 API_CLIENT_URL = 'https://github.com/wakatime/wakatime/archive/master.zip'
 API_CLIENT = os.path.join(PLUGIN_DIR, 'wakatime-master', 'wakatime', 'cli.py')
-SETTINGS_FILE = os.path.join(PLUGIN_DIR, 'wakatime.ini')
-SETTINGS = None
-settings = None
+SETTINGS_FILE = os.path.join(os.path.expanduser('~'), '.wakatime.cfg')
+SETTINGS = {}
 
 # Log Levels
 DEBUG   = 'DEBUG'
 INFO    = 'INFO'
 WARNING = 'WARNING'
 ERROR   = 'ERROR'
-
-# add wakatime package to path
-sys.path.insert(0, os.path.join(PLUGIN_DIR, 'packages'))
-try:
-    from wakatime.base import parseConfigFile
-except ImportError:
-    pass
 
 
 def u(text):
@@ -67,7 +63,7 @@ def u(text):
 
 
 def log(lvl, message, *args, **kwargs):
-    if lvl == DEBUG and not settings.getboolean('debug'): return
+    if lvl == DEBUG and not SETTINGS.getboolean('settings', 'debug'): return
     msg = message
     if len(args) > 0: msg = message.format(*args)
     elif len(kwargs) > 0: msg = message.format(**kwargs)
@@ -82,21 +78,21 @@ class API_Key_Dialog(bpy.types.Operator):
 
     def execute(self, context):
         if self.api_key:
-            settings['api_key'] = str(self.api_key)
+            SETTINGS.set('settings', 'api_key', u(self.api_key))
             save_settings()
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.api_key = settings.get('api_key', fallback='')
+        self.api_key = SETTINGS.get('settings', 'api_key', fallback='')
         return context.window_manager.invoke_props_dialog(self)
 
 
 class HeartbeatsSender(object):
     def __init__(self, heartbeat):
         threading.Thread.__init__(self)
-        self.debug   = settings.getboolean('debug')
-        self.api_key = settings.get('api_key', fallback='')
-        self.ignore  = settings.get('ignore', fallback=[])
+        self.debug   = SETTINGS.getboolean('settings', 'debug')
+        self.api_key = SETTINGS.get('settings', 'api_key', fallback='')
+        self.ignore  = SETTINGS.get('settings', 'ignore', fallback=[])
         self.heartbeat = heartbeat
         self.has_extra_heartbeats = False
         self.extra_heartbeats = []
@@ -118,7 +114,7 @@ class HeartbeatsSender(object):
         return cmd
 
     def send(self):
-        ua = '"blender/%s blender-wakatime/%s"' % (bpy.app.version_string, __version__)
+        ua = 'blender/%s blender-wakatime/%s' % (bpy.app.version_string.split(' ')[0], __version__)
         cmd = [
             bpy.app.binary_path_python,
             API_CLIENT,
@@ -173,7 +169,7 @@ class HeartbeatQueueProcessor(threading.Thread):
     def run(self):
         while True:
             time.sleep(1)
-            if 'api_key' not in settings: continue
+            if not SETTINGS.has_option('settings', 'api_key'): continue
             try: heartbeat = self._queue.get_nowait()
             except Empty: continue
             if heartbeat is None: return
@@ -215,26 +211,43 @@ def save_settings():
 
 
 def setup():
-    global SETTINGS, settings, _hb_processor
+    global SETTINGS, _hb_processor
     download = DownloadWakatime()
     download.start()
-    SETTINGS = ConfigParser()
-    SETTINGS.read(os.path.join(PLUGIN_DIR, SETTINGS_FILE))
-    if not SETTINGS.has_section('settings'):
-        log(INFO, 'Creating default config...')
-        SETTINGS.add_section('settings')
-        SETTINGS.set('settings', 'debug', str(False))
-        SETTINGS.set('settings', 'hidefilenames', str(False))
-    settings = SETTINGS['settings']
     try:
-        configs = parseConfigFile()
-        if configs is not None:
-            if configs.has_option('settings', 'api_key'):
-                API_Key_Dialog.default_key = configs.get('settings', 'api_key')
-                log(INFO, 'Found default API key.')
+        SETTINGS = parseConfigFile(configFile=SETTINGS_FILE)
     except: pass
+    if SETTINGS is not None and SETTINGS.has_option('settings', 'api_key'):
+        API_Key_Dialog.default_key = SETTINGS.get('settings', 'api_key')
+        log(INFO, 'Found default API key.')
+    if not SETTINGS.get('settings', 'api_key'):
+        # TODO: prompt for api key
+        # API_Key_Dialog()
+        pass
     _hb_processor = HeartbeatQueueProcessor(_heartbeats)
     _hb_processor.start()
+
+
+def parseConfigFile(configFile=None):
+    """Returns a configparser.SafeConfigParser instance with configs
+    read from the config file. Default location of the config file is
+    at ~/.wakatime.cfg.
+    """
+
+    if not configFile:
+        configFile = os.path.join(os.path.expanduser('~'), '.wakatime.cfg')
+
+    configs = configparser.SafeConfigParser()
+    try:
+        with open(configFile, 'r', encoding='utf-8') as fh:
+            try:
+                configs.readfp(fh)
+            except configparser.Error:
+                print(traceback.format_exc())
+                return None
+    except IOError:
+        print(u('Error: Could not read from config file {0}').format(u(configFile)))
+    return configs
 
 
 @persistent
