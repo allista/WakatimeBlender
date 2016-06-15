@@ -37,12 +37,12 @@ _filename = ''
 REGISTERED = False
 SHOW_KEY_DIALOG = False
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
+RESOURCES_DIR = os.path.join(os.path.expanduser('~'), '.wakatime')
 API_CLIENT_URL = 'https://github.com/wakatime/wakatime/archive/master.zip'
-API_CLIENT = os.path.join(PLUGIN_DIR, 'wakatime-master', 'wakatime', 'cli.py')
+API_CLIENT = os.path.join(os.path.expanduser('~'), '.wakatime', 'wakatime-master', 'wakatime', 'cli.py')
 SETTINGS_FILE = os.path.join(os.path.expanduser('~'), '.wakatime.cfg')
 SETTINGS = None
 settings = 'settings'
-blender  = 'blender'
 
 # Log Levels
 DEBUG   = 'DEBUG'
@@ -63,7 +63,7 @@ def u(text):
 
 
 def log(lvl, message, *args, **kwargs):
-    if lvl == DEBUG and not SETTINGS.getboolean(blender, 'debug'): return
+    if lvl == DEBUG and not SETTINGS.getboolean(settings, 'debug'): return
     msg = message
     if len(args) > 0: msg = message.format(*args)
     elif len(kwargs) > 0: msg = message.format(**kwargs)
@@ -132,7 +132,7 @@ class HeartbeatQueueProcessor(threading.Thread):
             cmd.append('--write')
         for pattern in SETTINGS.get(settings, 'ignore', fallback=[]):  # or should it be blender-specific?
             cmd.extend(['--ignore', pattern])
-        if SETTINGS.getboolean(blender, 'debug'):
+        if SETTINGS.getboolean(settings, 'debug'):
             cmd.append('--verbose')
         if extra_heartbeats:
             cmd.append('--extra-heartbeats')
@@ -189,12 +189,17 @@ class DownloadWakatime(threading.Thread):
 
     def run(self):
         log(INFO, 'WakatimeBlender is registered')
+        if not os.path.isdir(RESOURCES_DIR):
+            try: os.mkdir(RESOURCES_DIR)
+            except:
+                log(ERROR, 'Unable to create directory:\n%s' % RESOURCES_DIR)
+                return
         if not os.path.isfile(API_CLIENT):
             log(INFO, 'Downloading Wakatime...')
-            zip_file = os.path.join(PLUGIN_DIR, 'wakatime-master.zip')
+            zip_file = os.path.join(RESOURCES_DIR, 'wakatime-master.zip')
             request.urlretrieve(API_CLIENT_URL, zip_file)
             log(INFO, 'Extracting Wakatime...')
-            with ZipFile(zip_file) as zf: zf.extractall(PLUGIN_DIR)
+            with ZipFile(zip_file) as zf: zf.extractall(RESOURCES_DIR)
             try: os.remove(zip_file)
             except: pass
             log(INFO, 'Finished extracting Wakatime.')
@@ -215,10 +220,8 @@ def setup():
     #common wakatime settings
     if not SETTINGS.has_section(settings):
         SETTINGS.add_section(settings)
-    #plugin-specific configuration
-    if not SETTINGS.has_section(blender):
-        SETTINGS.add_section(blender)
-        SETTINGS.set(blender, 'debug', str(False))
+    if not SETTINGS.has_option(settings, 'debug'):
+        SETTINGS.set(settings, 'debug', str(False))
     _hb_processor = HeartbeatQueueProcessor(_heartbeats)
     _hb_processor.start()
 
