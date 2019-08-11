@@ -243,12 +243,19 @@ def handle_activity(is_write=False):
         _last_hb = {'entity':_filename, 'timestamp':timestamp, 'is_write':is_write}
         _heartbeats.put_nowait(_last_hb)
 
+classes = (
+    API_Key_Dialog,
+    HeartbeatQueueProcessor,
+    DownloadWakatime,
+)
 
 def register():
     global  REGISTERED
     log(INFO, 'Initializing WakaTime plugin v%s' % __version__)
     setup()
-    bpy.utils.register_module(__name__)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
     bpy.app.handlers.scene_update_post.append(activity_handler)
@@ -263,7 +270,9 @@ def unregister():
     bpy.app.handlers.load_post.remove(load_handler)
     bpy.app.handlers.save_post.remove(save_handler)
     bpy.app.handlers.scene_update_post.remove(activity_handler)
-    bpy.utils.unregister_module(__name__)
+    from bpy.utils import unregister_class
+    for cls in classes:
+        unregister_class(cls)
     _heartbeats.put_nowait(None)
     _heartbeats.task_done()
     _hb_processor.join()
