@@ -1,6 +1,8 @@
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty
+from bpy.utils import register_class
+from bpy.utils import unregister_class
 
 import json
 import os
@@ -248,14 +250,16 @@ classes = (
     HeartbeatQueueProcessor,
     DownloadWakatime,
 )
+register, unregister = bpy.utils.register_classes_factory(classes)
 
 def register():
     global  REGISTERED
     log(INFO, 'Initializing WakaTime plugin v%s' % __version__)
     setup()
-    from bpy.utils import register_class
+
     for cls in classes:
         register_class(cls)
+
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
     bpy.app.handlers.scene_update_post.append(activity_handler)
@@ -270,13 +274,13 @@ def unregister():
     bpy.app.handlers.load_post.remove(load_handler)
     bpy.app.handlers.save_post.remove(save_handler)
     bpy.app.handlers.scene_update_post.remove(activity_handler)
-    from bpy.utils import unregister_class
+    
     for cls in classes:
         unregister_class(cls)
+
     _heartbeats.put_nowait(None)
     _heartbeats.task_done()
     _hb_processor.join()
-
 
 if __name__ == '__main__':
     register()
