@@ -36,11 +36,12 @@ _filename = ''
 
 REGISTERED = False
 SHOW_KEY_DIALOG = False
+USER_HOME = os.path.expanduser('~')
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
-RESOURCES_DIR = os.path.join(os.path.expanduser('~'), '.wakatime')
+RESOURCES_DIR = os.path.join(USER_HOME, '.wakatime')
 API_CLIENT_URL = 'https://github.com/wakatime/wakatime/archive/master.zip'
-API_CLIENT = os.path.join(os.path.expanduser('~'), '.wakatime', 'wakatime-master', 'wakatime', 'cli.py')
-SETTINGS_FILE = os.path.join(os.path.expanduser('~'), '.wakatime.cfg')
+API_CLIENT = os.path.join(RESOURCES_DIR, 'wakatime-master', 'wakatime', 'cli.py')
+SETTINGS_FILE = os.path.join(USER_HOME, '.wakatime.cfg')
 SETTINGS = None
 settings = 'settings'
 
