@@ -1,29 +1,29 @@
-import bpy
-from bpy.app.handlers import persistent
-from bpy.props import StringProperty
-
 import json
 import os
 import sys
-import time
 import threading
+import time
+from configparser import ConfigParser
+from queue import Queue, Empty
+from subprocess import Popen, STDOUT, PIPE
 from urllib import request
 from zipfile import ZipFile
-from configparser import ConfigParser
-from subprocess import Popen, STDOUT, PIPE
-from queue import Queue, Empty
+
+import bpy
+from bpy.app.handlers import persistent
+from bpy.props import StringProperty
 
 __version__ = '1.0.2'
 
 bl_info = \
     {
-        "name":        "Wakatime plugin for Blender",
-        "category":    "Development",
-        "author":      "Allis Tauri <allista@gmail.com>",
-        "version":     (1, 0, 2),
-        "blender":     (2, 80, 0),
+        "name": "Wakatime plugin for Blender",
+        "category": "Development",
+        "author": "Allis Tauri <allista@gmail.com>",
+        "version": (1, 0, 2),
+        "blender": (2, 80, 0),
         "description": "Submits your working stats to the Wakatime time tracking service.",
-        "warning":     "Beta",
+        "warning": "Beta",
         "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
     }
 
@@ -46,14 +46,15 @@ SETTINGS = None
 settings = 'settings'
 
 # Log Levels
-DEBUG   = 'DEBUG'
-INFO    = 'INFO'
+DEBUG = 'DEBUG'
+INFO = 'INFO'
 WARNING = 'WARNING'
-ERROR   = 'ERROR'
+ERROR = 'ERROR'
 
 
 def u(text):
-    if text is None: return None
+    if text is None:
+        return None
     if isinstance(text, bytes):
         try:
             return text.decode('utf-8')
@@ -75,9 +76,9 @@ def log(lvl, message, *args, **kwargs):
 
 class API_Key_Dialog(bpy.types.Operator):
     bl_idname = "ui.wakatime_api_key_dialog"
-    bl_label  = "Enter WakaTime API Key"
-    api_key   = StringProperty(name="API Key")
-    is_shown  = False
+    bl_label = "Enter WakaTime API Key"
+    api_key = StringProperty(name="API Key")
+    is_shown = False
 
     @classmethod
     def show(cls):
@@ -118,7 +119,8 @@ class HeartbeatQueueProcessor(threading.Thread):
         ]
         if heartbeat['is_write']:
             cmd.append('--write')
-        for pattern in SETTINGS.get(settings, 'ignore', fallback=[]):  # or should it be blender-specific?
+        for pattern in SETTINGS.get(settings, 'ignore',
+                                    fallback=[]):  # or should it be blender-specific?
             cmd.extend(['--ignore', pattern])
         if SETTINGS.getboolean(settings, 'debug'):
             cmd.append('--verbose')
@@ -159,14 +161,17 @@ class HeartbeatQueueProcessor(threading.Thread):
         while True:
             time.sleep(1)
             if not SETTINGS.get(settings, 'api_key', fallback=''): continue
-            try: heartbeat = self._queue.get_nowait()
-            except Empty: continue
+            try:
+                heartbeat = self._queue.get_nowait()
+            except Empty:
+                continue
             if heartbeat is None: return
             extra_heartbeats = []
             try:
                 while True:
                     extra_heartbeats.append(self._queue.get_nowait())
-            except Empty: pass
+            except Empty:
+                pass
             self.send(heartbeat, extra_heartbeats)
 
 
@@ -178,7 +183,8 @@ class DownloadWakatime(threading.Thread):
     def run(self):
         log(INFO, 'WakatimeBlender is registered')
         if not os.path.isdir(RESOURCES_DIR):
-            try: os.mkdir(RESOURCES_DIR)
+            try:
+                os.mkdir(RESOURCES_DIR)
             except Exception:
                 log(ERROR, 'Unable to create directory:\n{}', RESOURCES_DIR)
                 return
@@ -187,12 +193,15 @@ class DownloadWakatime(threading.Thread):
             zip_file = os.path.join(RESOURCES_DIR, 'wakatime-master.zip')
             request.urlretrieve(API_CLIENT_URL, zip_file)
             log(INFO, 'Extracting Wakatime...')
-            with ZipFile(zip_file) as zf: zf.extractall(RESOURCES_DIR)
-            try: os.remove(zip_file)
+            with ZipFile(zip_file) as zf:
+                zf.extractall(RESOURCES_DIR)
+            try:
+                os.remove(zip_file)
             except Exception:
                 pass
             log(INFO, 'Finished extracting Wakatime.')
-        else: log(INFO, 'Found Wakatime client')
+        else:
+            log(INFO, 'Found Wakatime client')
 
 
 def save_settings():
@@ -206,7 +215,7 @@ def setup():
     download.start()
     SETTINGS = ConfigParser()
     SETTINGS.read(SETTINGS_FILE)
-    #common wakatime settings
+    # common wakatime settings
     if not SETTINGS.has_section(settings):
         SETTINGS.add_section(settings)
     if not SETTINGS.has_option(settings, 'debug'):
@@ -235,7 +244,8 @@ def activity_handler(dummy):
 
 
 def enough_time_passed(now, is_write):
-    return _last_hb is None or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60))
+    return (_last_hb is None
+            or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
 def handle_activity(is_write=False):
@@ -245,12 +255,12 @@ def handle_activity(is_write=False):
     timestamp = time.time()
     last_file = _last_hb['entity'] if _last_hb is not None else ''
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
-        _last_hb = {'entity':_filename, 'timestamp':timestamp, 'is_write':is_write}
+        _last_hb = {'entity': _filename, 'timestamp': timestamp, 'is_write': is_write}
         _heartbeats.put_nowait(_last_hb)
 
 
 def register():
-    global  REGISTERED
+    global REGISTERED
     log(INFO, 'Initializing WakaTime plugin v{}', __version__)
     setup()
     bpy.utils.register_class(API_Key_Dialog)
