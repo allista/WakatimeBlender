@@ -101,7 +101,7 @@ class API_Key_Dialog(bpy.types.Operator):
 
 class HeartbeatQueueProcessor(threading.Thread):
     def __init__(self, q):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.daemon = True
         self._queue = q
 
@@ -172,7 +172,7 @@ class HeartbeatQueueProcessor(threading.Thread):
 
 class DownloadWakatime(threading.Thread):
     def __init__(self):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.daemon = True
 
     def run(self):
