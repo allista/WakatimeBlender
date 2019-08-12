@@ -1,8 +1,6 @@
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty
-from bpy.utils import register_class
-from bpy.utils import unregister_class
 
 import json
 import os
@@ -15,15 +13,15 @@ from configparser import ConfigParser
 from subprocess import Popen, STDOUT, PIPE
 from queue import Queue, Empty
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 bl_info = \
     {
         "name":        "Wakatime plugin for Blender",
         "category":    "Development",
         "author":      "Allis Tauri <allista@gmail.com>",
-        "version":     (1, 0, 1),
-        "blender":     (2, 77, 0),
+        "version":     (1, 0, 2),
+        "blender":     (2, 80, 0),
         "description": "Submits your working stats to the Wakatime time tracking service.",
         "warning":     "Beta",
         "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
@@ -245,24 +243,15 @@ def handle_activity(is_write=False):
         _last_hb = {'entity':_filename, 'timestamp':timestamp, 'is_write':is_write}
         _heartbeats.put_nowait(_last_hb)
 
-classes = (
-    API_Key_Dialog,
-    HeartbeatQueueProcessor,
-    DownloadWakatime,
-)
-register, unregister = bpy.utils.register_classes_factory(classes)
 
 def register():
     global  REGISTERED
     log(INFO, 'Initializing WakaTime plugin v%s' % __version__)
     setup()
-
-    for cls in classes:
-        register_class(cls)
-
+    bpy.utils.register_class(API_Key_Dialog)
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
-    bpy.app.handlers.scene_update_post.append(activity_handler)
+    bpy.app.handlers.depsgraph_update_pre.append(activity_handler)
     REGISTERED = True
 
 
@@ -273,14 +262,12 @@ def unregister():
     REGISTERED = False
     bpy.app.handlers.load_post.remove(load_handler)
     bpy.app.handlers.save_post.remove(save_handler)
-    bpy.app.handlers.scene_update_post.remove(activity_handler)
-    
-    for cls in classes:
-        unregister_class(cls)
-
+    bpy.app.handlers.depsgraph_update_pre.remove(activity_handler)
+    bpy.utils.unregister_class(API_Key_Dialog)
     _heartbeats.put_nowait(None)
     _heartbeats.task_done()
     _hb_processor.join()
+
 
 if __name__ == '__main__':
     register()
