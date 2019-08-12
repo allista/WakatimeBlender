@@ -106,7 +106,7 @@ class HeartbeatQueueProcessor(threading.Thread):
         self._queue = q
 
     @classmethod
-    def send(cls, heartbeat, extra_heartbeats=[]):
+    def send(cls, heartbeat, extra_heartbeats=None):
         global SHOW_KEY_DIALOG
         ua = f'blender/{bpy.app.version_string.split()[0]} blender-wakatime/{__version__}'
         cmd = [
