@@ -55,12 +55,17 @@ ERROR   = 'ERROR'
 def u(text):
     if text is None: return None
     if isinstance(text, bytes):
-        try: return text.decode('utf-8')
-        except:
-            try: return text.decode(sys.getdefaultencoding())
-            except: pass
-    try: return str(text)
-    except: return text
+        try:
+            return text.decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                return text.decode(sys.getdefaultencoding())
+            except UnicodeDecodeError:
+                pass
+    try:
+        return str(text)
+    except Exception:
+        return text
 
 
 def log(lvl, message, *args, **kwargs):
@@ -149,7 +154,7 @@ class HeartbeatQueueProcessor(threading.Thread):
                 log(DEBUG if retcode == 102 else ERROR, 'wakatime-core exited with status: {0}'.format(retcode))
             if output:
                 log(ERROR, u('wakatime-core output: {0}').format(output))
-        except:
+        except Exception:
             log(ERROR, u(sys.exc_info()[1]))
 
     def run(self):
@@ -176,8 +181,8 @@ class DownloadWakatime(threading.Thread):
         log(INFO, 'WakatimeBlender is registered')
         if not os.path.isdir(RESOURCES_DIR):
             try: os.mkdir(RESOURCES_DIR)
-            except:
-                log(ERROR, 'Unable to create directory:\n%s' % RESOURCES_DIR)
+            except Exception:
+                log(ERROR, 'Unable to create directory:\n{}', RESOURCES_DIR)
                 return
         if not os.path.isfile(API_CLIENT):
             log(INFO, 'Downloading Wakatime...')
@@ -186,7 +191,8 @@ class DownloadWakatime(threading.Thread):
             log(INFO, 'Extracting Wakatime...')
             with ZipFile(zip_file) as zf: zf.extractall(RESOURCES_DIR)
             try: os.remove(zip_file)
-            except: pass
+            except Exception:
+                pass
             log(INFO, 'Finished extracting Wakatime.')
         else: log(INFO, 'Found Wakatime client')
 
