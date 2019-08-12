@@ -148,9 +148,10 @@ class HeartbeatQueueProcessor(threading.Thread):
             else:
                 log(ERROR, 'Error')
             if retcode:
-                log(DEBUG if retcode == 102 else ERROR, 'wakatime-core exited with status: {0}'.format(retcode))
+                log(DEBUG if retcode == 102 else ERROR,
+                    'wakatime-core exited with status: {}', retcode)
             if output:
-                log(ERROR, u('wakatime-core output: {0}').format(output))
+                log(ERROR, 'wakatime-core output: {}', u(output))
         except Exception:
             log(ERROR, u(sys.exc_info()[1]))
 
@@ -250,7 +251,7 @@ def handle_activity(is_write=False):
 
 def register():
     global  REGISTERED
-    log(INFO, 'Initializing WakaTime plugin v%s' % __version__)
+    log(INFO, 'Initializing WakaTime plugin v{}', __version__)
     setup()
     bpy.utils.register_class(API_Key_Dialog)
     bpy.app.handlers.load_post.append(load_handler)
@@ -261,7 +262,7 @@ def register():
 
 def unregister():
     global REGISTERED
-    log(INFO, 'Unregistering WakaTime plugin v%s' % __version__)
+    log(INFO, 'Unregistering WakaTime plugin v{}',  __version__)
     save_settings()
     REGISTERED = False
     bpy.app.handlers.load_post.remove(load_handler)
