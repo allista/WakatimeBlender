@@ -108,12 +108,12 @@ class HeartbeatQueueProcessor(threading.Thread):
     @classmethod
     def send(cls, heartbeat, extra_heartbeats=[]):
         global SHOW_KEY_DIALOG
-        ua = 'blender/%s blender-wakatime/%s' % (bpy.app.version_string.split()[0], __version__)
+        ua = f'blender/{bpy.app.version_string.split()[0]} blender-wakatime/{__version__}'
         cmd = [
             bpy.app.binary_path_python,
             API_CLIENT,
             '--entity', heartbeat['entity'],
-            '--time', str('%f' % heartbeat['timestamp']),
+            '--time', f'{heartbeat["timestamp"]:f}',
             '--plugin', ua,
         ]
         if heartbeat['is_write']:
