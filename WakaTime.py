@@ -69,11 +69,8 @@ def u(text):
 
 
 def log(lvl, message, *args, **kwargs):
-    if lvl == DEBUG and not SETTINGS.getboolean(settings, 'debug'): return
-    msg = message
-    if len(args) > 0: msg = message.format(*args)
-    elif len(kwargs) > 0: msg = message.format(**kwargs)
-    print('[WakaTime] [{lvl}] {msg}'.format(lvl=lvl, msg=msg))
+    if lvl != DEBUG or SETTINGS.getboolean(settings, 'debug'):
+        print(f'[WakaTime] [{lvl}] {message.format(*args, **kwargs)}')
 
 
 class API_Key_Dialog(bpy.types.Operator):
