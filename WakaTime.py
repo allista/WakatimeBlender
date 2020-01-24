@@ -1,5 +1,6 @@
 import json
 import os
+import ssl
 import sys
 import threading
 import time
@@ -26,6 +27,8 @@ bl_info = \
         "warning": "Beta",
         "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
     }
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # globals
 HEARTBEAT_FREQUENCY = 2
