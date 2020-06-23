@@ -18,12 +18,16 @@ If for some reason you wish to change the key, press Space to summon the floatin
 When setup is finished, the plugin should start sending the time you've spent on the currently loaded .blend file automatically in the background. **Note**, that unless you save a newly created file no stats are gathered, because Wakatime needs a filepath.
 
 ### Configuration
-The Add-On tries to "guess" the projects name from the current blend-filename or from the projects folder.
+The Add-On tries to "guess" the projects name from the current blend-filename or from the project-folder.
 
-To fine-tune the project's name, there some options are available under *Preferences -> Add-ons -> WakaTime*.<br/>
+To fine-tune the project's name, there are some options available under *Preferences -> Add-ons -> WakaTime*.<br/>
 (This is also the place where to enable the add-on.)
 
-The first option decides, whether to use the directory-name for the project's name or the the filename (without the *.blend*-extensions) in WakaTime. 
+![Configuration](https://imgur.com/a/UaV54KG)
+
+The first check-box decides, on what to base the WakaTime-project-name:
+* if not checked: use the filename (without the *.blend*-extensions), or
+* if checked: use the (parent) directory-name.
 
 With the project-name extracted, further processing takes place:
 1. If there are specific (default: numbers, underscores and dots) **trailing** characters, those will be removed too.
