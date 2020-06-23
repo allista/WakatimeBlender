@@ -12,7 +12,7 @@ from zipfile import ZipFile
 
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import StringProperty
+from bpy.props import (BoolProperty, StringProperty)
 from bpy.utils import register_class
 
 __version__ = '1.1.0'
@@ -38,6 +38,7 @@ _filename = ''
 _default_chars='1234567890._'
 _default_prefix=''
 _default_postfix=''
+_default_use_project_folder=0
 
 REGISTERED = False
 SHOW_KEY_DIALOG = False
@@ -108,22 +109,36 @@ class API_Key_Dialog(bpy.types.Operator):
 # Addon prefs
 class WakaTimePreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
+    _def_chars="<empty>"
+    _def_prefix="<empty>"
+    _def_postfix="<empty>"
+    if len(_default_chars) > 0:
+        _def_chars=_default_chars
+    if len(_default_prefix) > 0:
+        _def_prefix=_default_prefix
+    if len(_default_postfix) > 0:
+        _def_postfix=_default_postfix
+    use_project_folder: BoolProperty(
+        name = "Use folder-name as project-name",
+        default = _default_use_project_folder,
+        description="Will use the name of the parent-folder as the project-name.\n\nExample: if selected, filename 'birthday_project/test_01.blend' will result in project-name 'birthday_project'\n\nHint: if not activated, the blender-filename without the blend-extension is used.\n\nDefault: " + str(bool(_default_use_project_folder)))
     truncate_trail: StringProperty(
         name = "Cut trailing characters",
         default = _default_chars,
-        description="When guessing the projects name, the filename without the blend-extension and without these trailing characters is used.\n\nExample: filename 'birthday_01_test_01.blend' will result in project-name 'birthday_01_test'\n\nDefault: " + _default_chars)
+        description="With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: '" + _def_chars + "'")
     project_prefix: StringProperty(
         name = "project-name prefix",
         default = _default_prefix,
-        description="This prefix will be attached in front of all project-names.\n\nDefault: " + _default_prefix)
+        description="This text will be attached in front of the project-name.\n\nDefault: '" + _def_prefix + "'")
     project_postfix: StringProperty(
         name = "project-name postfix",
         default = _default_postfix,
-        description="This postfix will be attached at the end of all project-names, after the trailing characters were removed.\n\nDefault: " + _default_postfix)
+        description="This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '" + _def_postfix + "'")
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+        col.prop(self, "use_project_folder")
         col.prop(self, "truncate_trail")
         col.prop(self, "project_prefix")
         col.prop(self, "project_postfix")
@@ -291,16 +306,21 @@ def handle_activity(is_write=False):
     timestamp = time.time()
     last_file = _last_hb['entity'] if _last_hb is not None else ''
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
-        # use filename to derive a project-name
+        # use file- or folder-name to derive a project-name
         blender_settings = bpy.context.preferences.addons[__name__].preferences
         if hasattr(blender_settings, "truncate_trail"):
             truncate_chars = blender_settings.truncate_trail
         else:
             truncate_chars = ""
         log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
-        _projectname = os.path.splitext(_filename)[0] # cut away extension
-        _projectname = _projectname.rstrip(truncate_chars) # strip trailing configured characters (from preferences-menu)
-        _projectname = path_leaf(_projectname) # remove path from the (full) filename
+        # project-folder or blend-filename?
+        if blender_settings.use_project_folder:
+            _projectname=os.path.basename(os.path.dirname(_filename)) # grab the name of the parent-directory
+        else:
+            _projectname = os.path.splitext(_filename)[0] # cut away the (.blend) extension
+            _projectname = path_leaf(_projectname) # remove (the full) path from the filename
+        _projectname = _projectname.rstrip(truncate_chars) # remove trailing characters (as configured in "Preferences")
+        # tune project-name with pre- and postfix
         _projectname = blender_settings.project_prefix + _projectname + blender_settings.project_postfix
         log(INFO, "project-name in WakaTime: {}", _projectname)
 
