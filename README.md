@@ -25,7 +25,12 @@ If there are **trailing** numbers, underscores or dots, those too will be remove
 To set which characters to remove, the user can configure the list under *Preferences*.
 Go to *Add-ons*, search for "WakaTime". There is a text-field that contains the list of characters to remove (if they are trailing the projects name).
 
+Additionally the user can set a pre- and postfix to apply to the project's name after the above mentioned cleanup.
+
 #### Examples
-1. To prevent any change of the projects-name, remove all the characters from the text-field and press enter.
-2. To only remove numbers, enter "1234567890" in the text-field and press enter.
-3. To remove numbers, underscores and dots, enter "1234567890.\_" and press enter.
+1. To prevent any adjusting of the projects-name, remove all the characters from the text-field and press enter. Also remove any text from the pre- and postfix-strings.
+2. To have the projects name have a ".blend"-extension, add ".blend" in the postfix-text-field.
+3. To only remove numbers, enter "1234567890" in the trailing character-text-field and press enter.
+4. To remove numbers, underscores and dots, enter "1234567890.\_" in the trailing character-text-field and press enter.
+5. To turn "captain_afterburner.blend" into the project-name "\[blender\] captain_afterburner", set the prefix to "\[blender\] ", the postfix to "" (nothing).
+6. To turn "captain_afterburner_05.blend" into the project-name "\[blender\] captain_afterburner", apply steps #4 and #5 together.

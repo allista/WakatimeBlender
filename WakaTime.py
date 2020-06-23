@@ -36,6 +36,8 @@ _hb_processor = None
 _last_hb = None
 _filename = ''
 _default_chars='1234567890._'
+_default_prefix=''
+_default_postfix=''
 
 REGISTERED = False
 SHOW_KEY_DIALOG = False
@@ -109,12 +111,22 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     truncate_trail: StringProperty(
         name = "Cut trailing characters",
         default = _default_chars,
-        description="When guessing the projects name, the filename without the ('blend') extension is used.\nAdditionally any trailing characters listed here are removed too.\n\nExample: filename 'birthday_01_test_01.blend' will result in project-name 'birthday_01_test'\n\nDefault: '" + _default_chars + "'")
+        description="When guessing the projects name, the filename without the blend-extension and without these trailing characters is used.\n\nExample: filename 'birthday_01_test_01.blend' will result in project-name 'birthday_01_test'\n\nDefault: " + _default_chars)
+    project_prefix: StringProperty(
+        name = "project-name prefix",
+        default = _default_prefix,
+        description="This prefix will be attached in front of all project-names.\n\nDefault: " + _default_prefix)
+    project_postfix: StringProperty(
+        name = "project-name postfix",
+        default = _default_postfix,
+        description="This postfix will be attached at the end of all project-names, after the trailing characters were removed.\n\nDefault: " + _default_postfix)
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
         col.prop(self, "truncate_trail")
+        col.prop(self, "project_prefix")
+        col.prop(self, "project_postfix")
 
 
 class HeartbeatQueueProcessor(threading.Thread):
@@ -289,6 +301,7 @@ def handle_activity(is_write=False):
         _projectname = os.path.splitext(_filename)[0] # cut away extension
         _projectname = _projectname.rstrip(truncate_chars) # strip trailing configured characters (from preferences-menu)
         _projectname = path_leaf(_projectname) # remove path from the (full) filename
+        _projectname = blender_settings.project_prefix + _projectname + blender_settings.project_postfix
         log(INFO, "project-name in WakaTime: {}", _projectname)
 
         _last_hb = {'entity': _filename, 'project': _projectname, 'timestamp': timestamp, 'is_write': is_write}
