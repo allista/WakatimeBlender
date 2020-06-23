@@ -1,4 +1,5 @@
 import json
+import ntpath
 import os
 import sys
 import threading
@@ -12,15 +13,16 @@ from zipfile import ZipFile
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty
+from bpy.utils import register_class
 
-__version__ = '1.0.2'
+__version__ = '1.1.0'
 
 bl_info = \
     {
         "name": "Wakatime plugin for Blender",
         "category": "Development",
         "author": "Allis Tauri <allista@gmail.com>",
-        "version": (1, 0, 2),
+        "version": (1, 1, 0),
         "blender": (2, 80, 0),
         "description": "Submits your working stats to the Wakatime time tracking service.",
         "warning": "Beta",
@@ -33,6 +35,7 @@ _heartbeats = Queue()
 _hb_processor = None
 _last_hb = None
 _filename = ''
+_default_chars='1234567890._'
 
 REGISTERED = False
 SHOW_KEY_DIALOG = False
@@ -100,6 +103,20 @@ class API_Key_Dialog(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
 
+# Addon prefs
+class WakaTimePreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+    truncate_trail: StringProperty(
+        name = "Cut trailing characters",
+        default = _default_chars,
+        description="When guessing the projects name, the filename without the ('blend') extension is used.\nAdditionally any trailing characters listed here are removed too.\n\nExample: filename 'birthday_01_test_01.blend' will result in project-name 'birthday_01_test'\n\nDefault: '" + _default_chars + "'")
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "truncate_trail")
+
+
 class HeartbeatQueueProcessor(threading.Thread):
     def __init__(self, q):
         super().__init__()
@@ -115,6 +132,7 @@ class HeartbeatQueueProcessor(threading.Thread):
             API_CLIENT,
             '--entity', heartbeat['entity'],
             '--time', f'{heartbeat["timestamp"]:f}',
+            '--project', heartbeat['project'],
             '--plugin', ua,
         ]
         if heartbeat['is_write']:
@@ -248,6 +266,12 @@ def enough_time_passed(now, is_write):
             or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
+# removing path from the full filename... this should work under all OS
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
+
+
 def handle_activity(is_write=False):
     global _last_hb
     if SHOW_KEY_DIALOG or not SETTINGS.get(settings, 'api_key', fallback=''):
@@ -255,7 +279,19 @@ def handle_activity(is_write=False):
     timestamp = time.time()
     last_file = _last_hb['entity'] if _last_hb is not None else ''
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
-        _last_hb = {'entity': _filename, 'timestamp': timestamp, 'is_write': is_write}
+        # use filename to derive a project-name
+        blender_settings = bpy.context.preferences.addons[__name__].preferences
+        if hasattr(blender_settings, "truncate_trail"):
+            truncate_chars = blender_settings.truncate_trail
+        else:
+            truncate_chars = ""
+        log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
+        _projectname = os.path.splitext(_filename)[0] # cut away extension
+        _projectname = _projectname.rstrip(truncate_chars) # strip trailing configured characters (from preferences-menu)
+        _projectname = path_leaf(_projectname) # remove path from the (full) filename
+        log(INFO, "project-name in WakaTime: {}", _projectname)
+
+        _last_hb = {'entity': _filename, 'project': _projectname, 'timestamp': timestamp, 'is_write': is_write}
         _heartbeats.put_nowait(_last_hb)
 
 
@@ -267,6 +303,7 @@ def register():
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
     bpy.app.handlers.depsgraph_update_pre.append(activity_handler)
+    register_class(WakaTimePreferences)
     REGISTERED = True
 
 
@@ -282,6 +319,7 @@ def unregister():
     _heartbeats.put_nowait(None)
     _heartbeats.task_done()
     _hb_processor.join()
+    unregister_class(WakaTimePreferences)
 
 
 if __name__ == '__main__':
