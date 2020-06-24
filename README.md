@@ -23,11 +23,11 @@ The Add-On tries to "guess" the projects name from the current blend-filename or
 To fine-tune the project's name, there are some options available under *Preferences -> Add-ons -> WakaTime*.<br/>
 (This is also the place where to enable the add-on.)
 
-![Configuration](https://imgur.com/a/UaV54KG)
+![Configuration](https://i.imgur.com/22zIvWe.png)
 
 The first check-box decides, on what to base the WakaTime-project-name:
 * if not checked: use the filename (without the *.blend*-extensions), or
-* if checked: use the (parent) directory-name.
+* if checked: use the parent's directory-name.
 
 With the project-name extracted, further processing takes place:
 1. If there are specific (default: numbers, underscores and dots) **trailing** characters, those will be removed too.
@@ -36,7 +36,7 @@ With the project-name extracted, further processing takes place:
 
 #### Examples
 1. To prevent any adjusting of the projects-name, remove all the characters from the text-field and press enter. Also remove any text from the pre- and postfix-strings.
-2. To have the projects name have a ".blend"-extension, add ".blend" in the postfix-text-field.
+2. To give the project-name a ".blend"-extension, add ".blend" in the postfix-text-field.
 3. To only remove trailing numbers (e.g. versions), enter "1234567890" in the trailing character-text-field and press enter.
 4. To remove numbers, underscores and dots, enter "1234567890.\_" in the trailing character-text-field and press enter. (This is the default.)
 5. To turn "captain_afterburner.blend" into the project-name "\[blender\] captain_afterburner", set the prefix to "\[blender\] ", the postfix to "" (nothing).
