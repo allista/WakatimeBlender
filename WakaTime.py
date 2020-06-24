@@ -121,7 +121,7 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     use_project_folder: BoolProperty(
         name = "Use folder-name as project-name",
         default = _default_use_project_folder,
-        description="Will use the name of the parent-folder as the project-name.\n\nExample: if selected, filename 'birthday_project/test_01.blend' will result in project-name 'birthday_project'\n\nHint: if not activated, the blender-filename without the blend-extension is used.\n\nDefault: " + str(bool(_default_use_project_folder)))
+        description="Will use the name of the folder/directory-name as the project-name.\n\nExample: if selected, filename 'birthday_project/test_01.blend' will result in project-name 'birthday_project'\n\nHint: if not activated, the blender-filename without the blend-extension is used.\n\nDefault: " + str(bool(_default_use_project_folder)))
     truncate_trail: StringProperty(
         name = "Cut trailing characters",
         default = _default_chars,
@@ -315,7 +315,7 @@ def handle_activity(is_write=False):
         log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
         # project-folder or blend-filename?
         if blender_settings.use_project_folder:
-            _projectname=os.path.basename(os.path.dirname(_filename)) # grab the name of the parent-directory
+            _projectname=os.path.basename(os.path.dirname(_filename)) # grab the name of the directory
         else:
             _projectname = os.path.splitext(_filename)[0] # cut away the (.blend) extension
             _projectname = path_leaf(_projectname) # remove (the full) path from the filename

@@ -27,7 +27,7 @@ To fine-tune the project's name, there are some options available under *Prefere
 
 The first check-box decides, on what to base the WakaTime-project-name:
 * if not checked: use the filename (without the *.blend*-extensions), or
-* if checked: use the parent's directory-name.
+* if checked: use the directory-name (of the blend-file).
 
 With the project-name extracted, further processing takes place:
 1. If there are specific (default: numbers, underscores and dots) **trailing** characters, those will be removed too.
@@ -35,10 +35,10 @@ With the project-name extracted, further processing takes place:
 3. Optional: add a postfix to the project's title.
 
 #### Examples
-1. To prevent any adjusting of the projects-name, remove all the characters from the text-field and press enter. Also remove any text from the pre- and postfix-strings.
-2. To give the project-name a ".blend"-extension, add ".blend" in the postfix-text-field.
-3. To only remove trailing numbers (e.g. versions), enter "1234567890" in the trailing character-text-field and press enter.
-4. To remove numbers, underscores and dots, enter "1234567890.\_" in the trailing character-text-field and press enter. (This is the default.)
-5. To turn "captain_afterburner.blend" into the project-name "\[blender\] captain_afterburner", set the prefix to "\[blender\] ", the postfix to "" (nothing).
-6. To turn "captain_afterburner_05.blend" into the project-name "\[blender\] captain_afterburner", apply steps #4 and #5 together.
-7. If you want to use the "parent" directory's name, check "Use folder-name as project-name". All steps from #2 to #6 can still be used to adjust the name.
+1. To give the project-name a ".blend"-extension, add ".blend" in the postfix-text-field.
+2. To only remove trailing numbers (e.g. versions), enter "1234567890" in the trailing character-text-field and press enter.
+3. To remove numbers, underscores and dots, enter "1234567890.\_" in the trailing character-text-field and press enter. (This is the default.)
+4. To turn "captain_afterburner.blend" into the project-name "\[blender\] captain_afterburner", set the prefix to "\[blender\] ", the postfix to "" (nothing).
+5. To turn "captain_afterburner_05.blend" into the project-name "\[blender\] captain_afterburner", apply steps #3 and #4 together.
+6. If you want to use the directory's name, check "Use folder-name as project-name". All steps from #1 to #5 can still be used to adjust the name.
+7. To prevent any adjusting of the projects-name, remove all the characters from all three text-fields and press enter.
