@@ -336,10 +336,7 @@ def handle_activity(is_write=False):
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
         # use file- or folder-name to derive a project-name
         blender_settings = bpy.context.preferences.addons[__name__].preferences
-        if hasattr(blender_settings, "truncate_trail"):
-            truncate_chars = blender_settings.truncate_trail
-        else:
-            truncate_chars = ""
+        truncate_chars = blender_settings.truncate_trail
         log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
         # project-folder or blend-filename?
         if blender_settings.use_project_folder:
