@@ -332,8 +332,6 @@ def guessProjectName(
     project_prefix,
     project_postfix
 ):
-    # use file- or folder-name to derive a project-name
-    log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
     # project-folder or blend-filename?
     if use_project_folder:
         _name = os.path.basename(os.path.dirname(filename)) # grab the name of the directory
