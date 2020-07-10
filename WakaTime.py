@@ -125,7 +125,7 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     always_overwrite_name: BoolProperty(
         name = "Overwrite project-discovery with the name from below",
         default = _default_always_overwrite_projectname,
-        description="WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: " + str(bool(_default_always_overwrite_projectname)))
+        description = "WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: {bool(_default_always_overwrite_projectname)}")
     use_project_folder: BoolProperty(
         name = "Use folder-name as project-name",
         default = _default_use_project_folder,
