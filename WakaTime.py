@@ -38,6 +38,7 @@ _heartbeats = Queue()
 _hb_processor = None
 _last_hb = None
 _filename = ''
+_default_always_overwrite_projectname=0
 _default_chars='1234567890._'
 _default_prefix=''
 _default_postfix=''
@@ -121,6 +122,10 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
         _def_prefix=_default_prefix
     if len(_default_postfix) > 0:
         _def_postfix=_default_postfix
+    always_overwrite_name: BoolProperty(
+        name = "Overwrite project-discovery with the name from below",
+        default = _default_always_overwrite_projectname,
+        description="WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: " + str(bool(_default_always_overwrite_projectname)))
     use_project_folder: BoolProperty(
         name = "Use folder-name as project-name",
         default = _default_use_project_folder,
@@ -141,6 +146,7 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+        col.prop(self, "always_overwrite_name")
         col.prop(self, "use_project_folder")
         col.prop(self, "truncate_trail")
         col.prop(self, "project_prefix")
@@ -162,9 +168,13 @@ class HeartbeatQueueProcessor(threading.Thread):
             API_CLIENT,
             '--entity', heartbeat['entity'],
             '--time', f'{heartbeat["timestamp"]:f}',
-            '--project', heartbeat['project'],
             '--plugin', ua,
         ]
+        blender_settings = bpy.context.preferences.addons[__name__].preferences
+        if blender_settings.always_overwrite_name:
+            cmd.extend(['--project', heartbeat['project']])
+        else:
+            cmd.extend(['--alternate-project', heartbeat['project']])
         if heartbeat['is_write']:
             cmd.append('--write')
         for pattern in SETTINGS.get(settings, 'ignore',
@@ -267,7 +277,7 @@ class DownloadWakaTime(threading.Thread):
                     + 'Maybe there is a problem with your Internet connection?\n',
                     e.reason)
                 raise e
-            
+
             log(INFO, 'Extracting Wakatime...')
             with ZipFile(zip_file_path) as zf:
                 zf.extractall(RESOURCES_DIR)
