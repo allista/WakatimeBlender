@@ -118,7 +118,7 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     always_overwrite_name: BoolProperty(
         name = "Overwrite project-discovery with the name from below",
         default = _default_always_overwrite_projectname,
-        description = "WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: {bool(_default_always_overwrite_projectname)}")
+        description = f"WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: {bool(_default_always_overwrite_projectname)}")
     use_project_folder: BoolProperty(
         name = "Use folder-name as project-name",
         default = _default_use_project_folder,
@@ -126,15 +126,15 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     truncate_trail: StringProperty(
         name = "Cut trailing characters",
         default = _default_chars,
-        description="With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: '" + _def_chars + "'")
+        description = f"With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: '{_def_chars}'")
     project_prefix: StringProperty(
         name = "project-name prefix",
         default = _default_prefix,
-        description="This text will be attached in front of the project-name.\n\nDefault: '" + _def_prefix + "'")
+        description = f"This text will be attached in front of the project-name.\n\nDefault: '{_def_prefix}'")
     project_postfix: StringProperty(
         name = "project-name postfix",
         default = _default_postfix,
-        description="This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '" + _def_postfix + "'")
+        description = f"This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '{_def_postfix}'")
 
     def draw(self, context):
         layout = self.layout
