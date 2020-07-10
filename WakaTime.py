@@ -12,7 +12,6 @@ from zipfile import ZipFile
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import (BoolProperty, StringProperty)
-from bpy.utils import register_class
 
 import ssl
 import urllib
@@ -357,11 +356,11 @@ def register():
     global REGISTERED
     log(INFO, 'Initializing WakaTime plugin v{}', __version__)
     setup()
+    bpy.utils.register_class(WakaTimePreferences)
     bpy.utils.register_class(API_Key_Dialog)
     bpy.app.handlers.load_post.append(load_handler)
     bpy.app.handlers.save_post.append(save_handler)
     bpy.app.handlers.depsgraph_update_pre.append(activity_handler)
-    register_class(WakaTimePreferences)
     REGISTERED = True
 
 
@@ -377,7 +376,7 @@ def unregister():
     _heartbeats.put_nowait(None)
     _heartbeats.task_done()
     _hb_processor.join()
-    unregister_class(WakaTimePreferences)
+    bpy.utils.unregister_class(WakaTimePreferences)
 
 
 if __name__ == '__main__':
