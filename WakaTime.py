@@ -112,9 +112,6 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     _default_postfix = ''
     _default_use_project_folder = 0
     bl_idname = __name__
-    _def_chars = _default_chars if _default_chars else "<empty>"
-    _def_prefix = _default_prefix if _default_prefix else "<empty>"
-    _def_postfix = _default_postfix if _default_postfix else "<empty>"
     always_overwrite_name: BoolProperty(
         name = "Overwrite project-discovery with the name from below",
         default = _default_always_overwrite_projectname,
@@ -126,15 +123,15 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     truncate_trail: StringProperty(
         name = "Cut trailing characters",
         default = _default_chars,
-        description = f"With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: '{_def_chars}'")
+        description = f"With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: {_default_chars or '<empty>'}")
     project_prefix: StringProperty(
         name = "project-name prefix",
         default = _default_prefix,
-        description = f"This text will be attached in front of the project-name.\n\nDefault: '{_def_prefix}'")
+        description = f"This text will be attached in front of the project-name.\n\nDefault: '{_default_prefix or '<empty>'}'")
     project_postfix: StringProperty(
         name = "project-name postfix",
         default = _default_postfix,
-        description = f"This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '{_def_postfix}'")
+        description = f"This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '{_default_postfix or '<empty>'}'")
 
     def draw(self, context):
         layout = self.layout
@@ -327,7 +324,7 @@ def enough_time_passed(now, is_write):
             or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
-@lru_cache(maxsize=4)
+@lru_cache
 def guessProjectName(filename):
     # use file- or folder-name to derive a project-name
     blender_settings = bpy.context.preferences.addons[__name__].preferences
