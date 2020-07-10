@@ -21,7 +21,7 @@ When setup is finished, the plugin should start sending the time you've spent on
 WakaTime will try to detect the projects name, e.g. from the git-repo.
 If one does not work with git, the project's name would be "Unknown Project" within WakaTime.
 <br/>
-So this Add-On can try to "guess" the projects name from the current blend-filename or from the project-folder.
+So this Add-On can try to "guess" the project name from the current blend-filename or from the project-folder.
 
 To fine-tune the project's name, there are some options available under *Preferences -> Add-ons -> WakaTime*.<br/>
 (This is also the place where to enable the add-on.)
