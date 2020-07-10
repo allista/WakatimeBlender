@@ -13,6 +13,9 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty
 
+import ssl
+import urllib
+
 __version__ = '1.0.2'
 
 bl_info = \
@@ -175,33 +178,61 @@ class HeartbeatQueueProcessor(threading.Thread):
             self.send(heartbeat, extra_heartbeats)
 
 
-class DownloadWakatime(threading.Thread):
+class DownloadWakaTime(threading.Thread):
+    '''Downloads WakaTime client if it isn't already downloaded.
+    '''
     def __init__(self):
         super().__init__()
         self.daemon = True
 
     def run(self):
         log(INFO, 'WakatimeBlender is registered')
+
         if not os.path.isdir(RESOURCES_DIR):
+            # there is no resources directory,
+            # attempt creating one
             try:
                 os.mkdir(RESOURCES_DIR)
             except Exception:
                 log(ERROR, 'Unable to create directory:\n{}', RESOURCES_DIR)
                 return
+
         if not os.path.isfile(API_CLIENT):
+            # there is no WakaTime client present in the directory
             log(INFO, 'Downloading Wakatime...')
-            zip_file = os.path.join(RESOURCES_DIR, 'wakatime-master.zip')
-            request.urlretrieve(API_CLIENT_URL, zip_file)
+            # the path to the zipped WakaTime client
+            zip_file_path = os.path.join(RESOURCES_DIR, 'wakatime-master.zip')
+            # issue a new request to download said client
+            req = urllib.request.Request(API_CLIENT_URL)
+            context = ssl._create_unverified_context()
+            try:
+                # read and save the file to said zip file
+                with urllib.request.urlopen(req, context=context) as r, open(zip_file_path, 'wb+') as fo:
+                    # as the input file is in bytes, the write mode has
+                    # to be bytes as well, that's why it's `wb+`
+                    fo.write(r.read())
+            except urllib.error.HTTPError as e:
+                log(ERROR,
+                    'Could not download the WakaTime client. There was an HTTP error.\n',
+                    e.code, '\n', e.msg)
+                raise e
+            except urllib.error.URLError as e:
+                log(ERROR,
+                    'Could not download the WakaTime client. There was a URL error. '
+                    + 'Maybe there is a problem with your Internet connection?\n',
+                    e.reason)
+                raise e
+            
             log(INFO, 'Extracting Wakatime...')
-            with ZipFile(zip_file) as zf:
+            with ZipFile(zip_file_path) as zf:
                 zf.extractall(RESOURCES_DIR)
             try:
-                os.remove(zip_file)
+                os.remove(zip_file_path)
             except Exception:
                 pass
             log(INFO, 'Finished extracting Wakatime.')
         else:
-            log(INFO, 'Found Wakatime client')
+            log(INFO, 'Found Wakatime client.')
 
 
 def save_settings():
@@ -211,7 +242,7 @@ def save_settings():
 
 def setup():
     global SETTINGS, _hb_processor
-    download = DownloadWakatime()
+    download = DownloadWakaTime()
     download.start()
     SETTINGS = ConfigParser()
     SETTINGS.read(SETTINGS_FILE)
