@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from configparser import ConfigParser
+from functools import lru_cache
 from queue import Queue, Empty
 from subprocess import Popen, STDOUT, PIPE
 from urllib import request
@@ -326,6 +327,24 @@ def enough_time_passed(now, is_write):
             or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
+@lru_cache(maxsize=4)
+def guessProjectName(filename):
+    # use file- or folder-name to derive a project-name
+    blender_settings = bpy.context.preferences.addons[__name__].preferences
+    truncate_chars = blender_settings.truncate_trail
+    log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
+    # project-folder or blend-filename?
+    if blender_settings.use_project_folder:
+        _name = os.path.basename(os.path.dirname(filename)) # grab the name of the directory
+    else:
+        _name = os.path.splitext(filename)[0] # cut away the (.blend) extension
+        _name = os.path.basename(_name) # remove (the full) path from the filename
+    _name = _name.rstrip(truncate_chars) # remove trailing characters (as configured in "Preferences")
+    # tune project-name with pre- and postfix
+    _name = blender_settings.project_prefix + _name + blender_settings.project_postfix
+    log(INFO, "project-name in WakaTime: {}", _name)
+    return _name
+
 def handle_activity(is_write=False):
     global _last_hb
     if SHOW_KEY_DIALOG or not SETTINGS.get(settings, 'api_key', fallback=''):
@@ -333,21 +352,7 @@ def handle_activity(is_write=False):
     timestamp = time.time()
     last_file = _last_hb['entity'] if _last_hb is not None else ''
     if _filename and (_filename != last_file or enough_time_passed(timestamp, is_write)):
-        # use file- or folder-name to derive a project-name
-        blender_settings = bpy.context.preferences.addons[__name__].preferences
-        truncate_chars = blender_settings.truncate_trail
-        log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
-        # project-folder or blend-filename?
-        if blender_settings.use_project_folder:
-            _projectname = os.path.basename(os.path.dirname(_filename)) # grab the name of the directory
-        else:
-            _projectname = os.path.splitext(_filename)[0] # cut away the (.blend) extension
-            _projectname = os.path.basename(_projectname) # remove (the full) path from the filename
-        _projectname = _projectname.rstrip(truncate_chars) # remove trailing characters (as configured in "Preferences")
-        # tune project-name with pre- and postfix
-        _projectname = blender_settings.project_prefix + _projectname + blender_settings.project_postfix
-        log(INFO, "project-name in WakaTime: {}", _projectname)
-
+        _projectname = guessProjectName(_filename)
         _last_hb = {'entity': _filename, 'project': _projectname, 'timestamp': timestamp, 'is_write': is_write}
         _heartbeats.put_nowait(_last_hb)
 
