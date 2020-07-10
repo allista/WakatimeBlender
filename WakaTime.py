@@ -16,7 +16,7 @@ from bpy.props import StringProperty
 import ssl
 import urllib
 
-__version__ = '1.0.2'
+__version__ = '1.0.2.1'
 
 bl_info = \
     {
