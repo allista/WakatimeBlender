@@ -324,7 +324,7 @@ def enough_time_passed(now, is_write):
             or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
-@lru_cache
+@lru_cache(maxsize=128)
 def guessProjectName(
     filename,
     truncate_trail,
