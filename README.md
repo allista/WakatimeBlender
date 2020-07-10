@@ -26,7 +26,7 @@ So this Add-On can try to "guess" the projects name from the current blend-filen
 To fine-tune the project's name, there are some options available under *Preferences -> Add-ons -> WakaTime*.<br/>
 (This is also the place where to enable the add-on.)
 
-![Configuration](https://i.imgur.com/Sw8F9JN.png)
+![Configuration](https://i.imgur.com/Wf6ZqPX.png)
 
 The first check-box decides, whether to **always** use the guessed name from this AddOn, effectively overwriting WakaTimes discovered name (i.e. the git-repo).
 
