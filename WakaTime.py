@@ -1,5 +1,4 @@
 import json
-import ntpath
 import os
 import sys
 import threading
@@ -328,12 +327,6 @@ def enough_time_passed(now, is_write):
             or (now - _last_hb['timestamp'] > (2 if is_write else HEARTBEAT_FREQUENCY * 60)))
 
 
-# removing path from the full filename... this should work under all OS
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
-
-
 def handle_activity(is_write=False):
     global _last_hb
     if SHOW_KEY_DIALOG or not SETTINGS.get(settings, 'api_key', fallback=''):
@@ -353,7 +346,7 @@ def handle_activity(is_write=False):
             _projectname = os.path.basename(os.path.dirname(_filename)) # grab the name of the directory
         else:
             _projectname = os.path.splitext(_filename)[0] # cut away the (.blend) extension
-            _projectname = path_leaf(_projectname) # remove (the full) path from the filename
+            _projectname = os.path.basename(_projectname) # remove (the full) path from the filename
         _projectname = _projectname.rstrip(truncate_chars) # remove trailing characters (as configured in "Preferences")
         # tune project-name with pre- and postfix
         _projectname = blender_settings.project_prefix + _projectname + blender_settings.project_postfix
