@@ -37,11 +37,6 @@ _heartbeats = Queue()
 _hb_processor = None
 _last_hb = None
 _filename = ''
-_default_always_overwrite_projectname=0
-_default_chars='1234567890._'
-_default_prefix=''
-_default_postfix=''
-_default_use_project_folder=0
 
 REGISTERED = False
 SHOW_KEY_DIALOG = False
@@ -111,6 +106,11 @@ class API_Key_Dialog(bpy.types.Operator):
 
 # Addon prefs
 class WakaTimePreferences(bpy.types.AddonPreferences):
+    _default_always_overwrite_projectname = 0
+    _default_chars = '1234567890._'
+    _default_prefix = ''
+    _default_postfix = ''
+    _default_use_project_folder = 0
     bl_idname = __name__
     _def_chars = _default_chars if _default_chars else "<empty>"
     _def_prefix = _default_prefix if _default_prefix else "<empty>"
