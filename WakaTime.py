@@ -356,7 +356,7 @@ def handle_activity(is_write=False):
         log(DEBUG, "truncate trailing chars from settings: {}", truncate_chars)
         # project-folder or blend-filename?
         if blender_settings.use_project_folder:
-            _projectname=os.path.basename(os.path.dirname(_filename)) # grab the name of the directory
+            _projectname = os.path.basename(os.path.dirname(_filename)) # grab the name of the directory
         else:
             _projectname = os.path.splitext(_filename)[0] # cut away the (.blend) extension
             _projectname = path_leaf(_projectname) # remove (the full) path from the filename
