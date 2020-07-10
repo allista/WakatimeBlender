@@ -113,15 +113,9 @@ class API_Key_Dialog(bpy.types.Operator):
 # Addon prefs
 class WakaTimePreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
-    _def_chars="<empty>"
-    _def_prefix="<empty>"
-    _def_postfix="<empty>"
-    if len(_default_chars) > 0:
-        _def_chars=_default_chars
-    if len(_default_prefix) > 0:
-        _def_prefix=_default_prefix
-    if len(_default_postfix) > 0:
-        _def_postfix=_default_postfix
+    _def_chars = _default_chars if _default_chars else "<empty>"
+    _def_prefix = _default_prefix if _default_prefix else "<empty>"
+    _def_postfix = _default_postfix if _default_postfix else "<empty>"
     always_overwrite_name: BoolProperty(
         name = "Overwrite project-discovery with the name from below",
         default = _default_always_overwrite_projectname,
