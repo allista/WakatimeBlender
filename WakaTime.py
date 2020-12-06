@@ -25,7 +25,7 @@ bl_info = \
         "category": "Development",
         "author": "Allis Tauri <allista@gmail.com>",
         "version": (1, 1, 0),
-        "blender": (2, 80, 0),
+        "blender": (2, 91, 0),
         "description": "Submits your working stats to the Wakatime time tracking service.",
         "warning": "Beta",
         "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
@@ -44,7 +44,8 @@ USER_HOME = os.path.expanduser('~')
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_DIR = os.path.join(USER_HOME, '.wakatime')
 API_CLIENT_URL = 'https://github.com/wakatime/wakatime/archive/master.zip'
-API_CLIENT = os.path.join(RESOURCES_DIR, 'wakatime-master', 'wakatime', 'cli.py')
+API_CLIENT = os.path.join(
+    RESOURCES_DIR, 'wakatime-master', 'wakatime', 'cli.py')
 SETTINGS_FILE = os.path.join(USER_HOME, '.wakatime.cfg')
 SETTINGS = None
 settings = 'settings'
@@ -81,7 +82,7 @@ def log(lvl, message, *args, **kwargs):
 class API_Key_Dialog(bpy.types.Operator):
     bl_idname = "ui.wakatime_api_key_dialog"
     bl_label = "Enter WakaTime API Key"
-    api_key = StringProperty(name="API Key")
+    api_key: StringProperty(name="API Key")
     is_shown = False
 
     @classmethod
@@ -111,27 +112,29 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
     _default_prefix = ''
     _default_postfix = ''
     _default_use_project_folder = 0
+    _default_api_key = ''
     bl_idname = __name__
+    api_key: StringProperty(name="API Key")
     always_overwrite_name: BoolProperty(
-        name = "Overwrite project-discovery with the name from below",
-        default = _default_always_overwrite_projectname,
-        description = f"WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: {bool(_default_always_overwrite_projectname)}")
+        name="Overwrite project-discovery with the name from below",
+        default=_default_always_overwrite_projectname,
+        description=f"WakaTime will guess the project-name (e.g. from the git-repo). Checking this box will overwrite this auto-discovered name (with the name according to the rules below).\n\nHint: when not working with git, the project's name will always be set according to the rules below.\n\nDefault: {bool(_default_always_overwrite_projectname)}")
     use_project_folder: BoolProperty(
-        name = "Use folder-name as project-name",
-        default = _default_use_project_folder,
-        description = f"Will use the name of the folder/directory-name as the project-name.\n\nExample: if selected, filename 'birthday_project/test_01.blend' will result in project-name 'birthday_project'\n\nHint: if not activated, the blender-filename without the blend-extension is used.\n\nDefault: {bool(_default_use_project_folder)}")
+        name="Use folder-name as project-name",
+        default=_default_use_project_folder,
+        description=f"Will use the name of the folder/directory-name as the project-name.\n\nExample: if selected, filename 'birthday_project/test_01.blend' will result in project-name 'birthday_project'\n\nHint: if not activated, the blender-filename without the blend-extension is used.\n\nDefault: {bool(_default_use_project_folder)}")
     truncate_trail: StringProperty(
-        name = "Cut trailing characters",
-        default = _default_chars,
-        description = f"With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: {_default_chars or '<empty>'}")
+        name="Cut trailing characters",
+        default=_default_chars,
+        description=f"With the project-name extracted (from folder- or filename), these trailing characters will be removed too.\n\nExample: filename 'birthday_01_test_02.blend' will result in project-name 'birthday_01_test'\n\nDefault: {_default_chars or '<empty>'}")
     project_prefix: StringProperty(
-        name = "project-name prefix",
-        default = _default_prefix,
-        description = f"This text will be attached in front of the project-name.\n\nDefault: '{_default_prefix or '<empty>'}'")
+        name="project-name prefix",
+        default=_default_prefix,
+        description=f"This text will be attached in front of the project-name.\n\nDefault: '{_default_prefix or '<empty>'}'")
     project_postfix: StringProperty(
-        name = "project-name postfix",
-        default = _default_postfix,
-        description = f"This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '{_default_postfix or '<empty>'}'")
+        name="project-name postfix",
+        default=_default_postfix,
+        description=f"This text will be attached at the end of the project-name, after the trailing characters were removed.\n\nDefault: '{_default_postfix or '<empty>'}'")
 
     def draw(self, context):
         layout = self.layout
@@ -141,6 +144,7 @@ class WakaTimePreferences(bpy.types.AddonPreferences):
         col.prop(self, "truncate_trail")
         col.prop(self, "project_prefix")
         col.prop(self, "project_postfix")
+        col.prop(self, "api_key")
 
 
 class HeartbeatQueueProcessor(threading.Thread):
@@ -154,7 +158,7 @@ class HeartbeatQueueProcessor(threading.Thread):
         global SHOW_KEY_DIALOG
         ua = f'blender/{bpy.app.version_string.split()[0]} blender-wakatime/{__version__}'
         cmd = [
-            bpy.app.binary_path_python,
+            sys.executable,
             API_CLIENT,
             '--entity', heartbeat['entity'],
             '--time', f'{heartbeat["timestamp"]:f}',
@@ -208,12 +212,14 @@ class HeartbeatQueueProcessor(threading.Thread):
     def run(self):
         while True:
             time.sleep(1)
-            if not SETTINGS.get(settings, 'api_key', fallback=''): continue
+            if not SETTINGS.get(settings, 'api_key', fallback=''):
+                continue
             try:
                 heartbeat = self._queue.get_nowait()
             except Empty:
                 continue
-            if heartbeat is None: return
+            if heartbeat is None:
+                return
             extra_heartbeats = []
             try:
                 while True:
@@ -226,6 +232,7 @@ class HeartbeatQueueProcessor(threading.Thread):
 class DownloadWakaTime(threading.Thread):
     '''Downloads WakaTime client if it isn't already downloaded.
     '''
+
     def __init__(self):
         super().__init__()
         self.daemon = True
@@ -334,15 +341,20 @@ def guessProjectName(
 ):
     # project-folder or blend-filename?
     if use_project_folder:
-        _name = os.path.basename(os.path.dirname(filename)) # grab the name of the directory
+        # grab the name of the directory
+        _name = os.path.basename(os.path.dirname(filename))
     else:
-        _name = os.path.splitext(filename)[0] # cut away the (.blend) extension
-        _name = os.path.basename(_name) # remove (the full) path from the filename
-    _name = _name.rstrip(truncate_trail) # remove trailing characters (as configured in "Preferences")
+        # cut away the (.blend) extension
+        _name = os.path.splitext(filename)[0]
+        # remove (the full) path from the filename
+        _name = os.path.basename(_name)
+    # remove trailing characters (as configured in "Preferences")
+    _name = _name.rstrip(truncate_trail)
     # tune project-name with pre- and postfix
     _name = f"{project_prefix}{_name}{project_postfix}"
     log(INFO, "project-name in WakaTime: {}", _name)
     return _name
+
 
 def handle_activity(is_write=False):
     global _last_hb
@@ -359,7 +371,8 @@ def handle_activity(is_write=False):
             blender_settings.project_prefix,
             blender_settings.project_postfix
         )
-        _last_hb = {'entity': _filename, 'project': _projectname, 'timestamp': timestamp, 'is_write': is_write}
+        _last_hb = {'entity': _filename, 'project': _projectname,
+                    'timestamp': timestamp, 'is_write': is_write}
         _heartbeats.put_nowait(_last_hb)
 
 
