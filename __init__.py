@@ -15,7 +15,7 @@ from .wakatime_blender.wakatime_downloader import (
 
 
 bl_info = {
-    "name": "Wakatime plugin for Blender",
+    "name": "WakaTime",
     "category": "Development",
     "author": "Allis Tauri <allista@gmail.com>",
     "version": (2, 0, 0),
