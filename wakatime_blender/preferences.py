@@ -72,9 +72,12 @@ class WakatimeProjectProperties(PropertyGroup):
 
     @classmethod
     def load_defaults(cls):
-        cls.__annotations__["always_overwrite_name"].keywords[
-            "default"
-        ] = settings.get_bool("always_overwrite_project_name")
+        annotation = cls.__annotations__["always_overwrite_name"]
+        if isinstance(annotation, tuple):
+            keywords = annotation[1]
+        else:
+            keywords = annotation.keywords
+        keywords["default"] = settings.get_bool("always_overwrite_project_name")
 
     @classmethod
     def reload_defaults(cls):
