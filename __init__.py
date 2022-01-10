@@ -19,7 +19,7 @@ bl_info = {
     "category": "Development",
     "author": "Allis Tauri <allista@gmail.com>",
     "version": (2, 0, 1),
-    "blender": (2, 93, 0),
+    "blender": (3, 0, 0),
     "description": "Submits your working stats to the Wakatime time tracking service.",
     "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
 }
@@ -69,7 +69,7 @@ def register():
         bpy.utils.register_class(ForceWakatimeDownload)
         bpy.utils.register_class(WakatimeProjectProperties)
         bpy.utils.register_class(PreferencesDialog)
-        bpy.types.TOPBAR_MT_app_system.append(menu)
+        bpy.types.TOPBAR_MT_blender_system.append(menu)
         bpy.app.handlers.load_post.append(load_handler)
         bpy.app.handlers.save_post.append(save_handler)
         bpy.app.handlers.depsgraph_update_pre.append(activity_handler)
@@ -90,7 +90,7 @@ def unregister():
         return
     try:
         log(INFO, "Unregistering Wakatime plugin v{}", __version__)
-        bpy.types.TOPBAR_MT_app_system.remove(menu)
+        bpy.types.TOPBAR_MT_blender_system.remove(menu)
         bpy.app.handlers.load_post.remove(load_handler)
         bpy.app.handlers.save_post.remove(save_handler)
         bpy.app.handlers.depsgraph_update_pre.remove(activity_handler)
