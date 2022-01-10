@@ -93,7 +93,15 @@ class HeartbeatQueue(threading.Thread):
         self._queue.put_nowait(self._last_hb)
 
     def shutdown(self):
+        self._stop()
         self._queue.put_nowait(None)
+
+    @property
+    def running(self):
+        with self._lock:
+            return self._running
+
+    def _stop(self):
         with self._lock:
             self._running = False
 
@@ -156,13 +164,10 @@ class HeartbeatQueue(threading.Thread):
             log(ERROR, u(sys.exc_info()[1]))
 
     def run(self):
-        while True:
+        while self.running:
             time.sleep(self.POLL_INTERVAL)
             if not settings.api_key():
-                with self._lock:
-                    if self._running:
-                        continue
-                    return
+                continue
             try:
                 heartbeat = self._queue.get_nowait()
             except Empty:
@@ -172,7 +177,11 @@ class HeartbeatQueue(threading.Thread):
             extra_heartbeats = []
             try:
                 while True:
-                    extra_heartbeats.append(self._queue.get_nowait())
+                    extra = self._queue.get_nowait()
+                    if extra is None:
+                        self._stop()
+                        break
+                    extra_heartbeats.append(extra)
             except Empty:
                 pass
             self._send_to_wakatime(heartbeat, extra_heartbeats)
