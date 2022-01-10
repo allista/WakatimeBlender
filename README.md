@@ -2,9 +2,14 @@
 
 ### Installation
 
-To install the plugin you need to download the [WakatimeBlender.zip](https://github.com/allista/WakatimeBlender/archive/refs/heads/master.zip) archive from GitHub.
+To install the plugin you need to download the source code archive from Releases
+section.
 
-![DownloadZip](https://imgur.com/7DkXEwh.png)
+![Releases](https://imgur.com/yZAYtY1.png)
+
+Chose the version made for your version of Blender.
+
+![Releases](https://imgur.com/PSzmfUJ.png)
 
 Save it somewhere, open the Blender, go to *Edit->Preferences...->Add-ons->Install...*
 
