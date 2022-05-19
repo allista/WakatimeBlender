@@ -11,7 +11,11 @@ Chose the version made for your version of Blender.
 
 ![Releases](https://imgur.com/PSzmfUJ.png)
 
-Save it somewhere, open the Blender, go to *Edit->Preferences...->Add-ons->Install...*
+Save it somewhere, and **rename it** so that there are **no dots** before the `.zip`.
+
+`WakatimeBlender-2.0.1-b3.0.0.zip -> WakatimeBlender-2.zip`
+
+Open the Blender, go to *Edit->Preferences...->Add-ons->Install...*
 
 ![Install](https://imgur.com/5FtTClK.png)
 
