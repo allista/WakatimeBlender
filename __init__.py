@@ -19,7 +19,7 @@ bl_info = {
     "category": "Development",
     "author": "Allis Tauri <allista@gmail.com>",
     "version": (2, 0, 1),
-    "blender": (3, 0, 0),
+    "blender": (3, 3, 0),
     "description": "Submits your working stats to the Wakatime time tracking service.",
     "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
 }
