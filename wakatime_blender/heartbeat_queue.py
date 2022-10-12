@@ -10,6 +10,7 @@ from subprocess import PIPE, Popen, STDOUT
 from typing import List, Optional
 
 import bpy
+from wakatime_blender.wakatime_downloader import getCliLocation
 from .log import DEBUG, ERROR, INFO, log
 from . import settings
 from .utils import u
@@ -110,7 +111,7 @@ class HeartbeatQueue(threading.Thread):
     ):
         ua = f"blender/{bpy.app.version_string.split()[0]} blender-wakatime/{self._version}"
         cmd = [
-            settings.API_CLIENT,
+            getCliLocation(),
             "--entity",
             heartbeat.entity,
             "--time",
