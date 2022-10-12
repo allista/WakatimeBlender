@@ -110,7 +110,6 @@ class HeartbeatQueue(threading.Thread):
     ):
         ua = f"blender/{bpy.app.version_string.split()[0]} blender-wakatime/{self._version}"
         cmd = [
-            sys.executable,
             settings.API_CLIENT,
             "--entity",
             heartbeat.entity,
