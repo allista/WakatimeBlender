@@ -145,7 +145,7 @@ class HeartbeatQueue(threading.Thread):
             output, err = process.communicate(input=inp)
             output = u(output)
             retcode = process.poll()
-            if (not retcode or retcode == 102) and not output:
+            if (not retcode or retcode == 102 or retcode == 112) and not output:
                 log(DEBUG, "OK")
             elif retcode == 104:  # wrong API key
                 log(ERROR, "Wrong API key. Asking for a new one...")
@@ -154,7 +154,7 @@ class HeartbeatQueue(threading.Thread):
                 log(ERROR, "Error")
             if retcode:
                 log(
-                    DEBUG if retcode == 102 else ERROR,
+                    DEBUG if retcode == 102 or retcode == 112 else ERROR,
                     "wakatime-core exited with status: {}",
                     retcode,
                 )
