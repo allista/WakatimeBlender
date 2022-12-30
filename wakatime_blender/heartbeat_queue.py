@@ -10,7 +10,7 @@ from subprocess import PIPE, Popen, STDOUT
 from typing import List, Optional
 
 import bpy
-from wakatime_blender.wakatime_downloader import getCliLocation
+from .wakatime_downloader import getCliLocation
 from .log import DEBUG, ERROR, INFO, log
 from . import settings
 from .utils import u
