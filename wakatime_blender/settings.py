@@ -5,13 +5,6 @@ from typing import Any, Callable, Optional, TypeVar
 USER_HOME = os.path.expanduser("~")
 PLUGIN_DIR = os.path.dirname(os.path.realpath(__file__))
 RESOURCES_DIR = os.path.join(USER_HOME, ".wakatime")
-API_CLIENT_DIR = os.path.join(RESOURCES_DIR, "wakatime-runtime")
-# using the legacy python client to avoid the need to figure out
-# which binary to download for particular platform
-API_CLIENT_URL = "https://github.com/wakatime/wakatime/archive/master.zip"
-API_CLIENT = os.path.join(
-    API_CLIENT_DIR, "legacy-python-cli-master", "wakatime", "cli.py"
-)
 # default wakatime config for legacy python client
 FILENAME = os.path.join(USER_HOME, ".wakatime.cfg")
 # default section in wakatime config
