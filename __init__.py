@@ -8,10 +8,7 @@ from .wakatime_blender.preferences import (
     PreferencesDialog,
     WakatimeProjectProperties,
 )
-from .wakatime_blender.wakatime_downloader import (
-    # ForceWakatimeDownload
-    WakatimeDownloader,
-)
+from .wakatime_blender.wakatime_downloader import WakatimeDownloader
 
 
 bl_info = {
@@ -21,7 +18,7 @@ bl_info = {
     "version": (2, 0, 1),
     "blender": (3, 3, 0),
     "description": "Submits your working stats to the Wakatime time tracking service.",
-    "tracker_url": "https://github.com/allista/WakatimeBlender/issues",
+    "tracker_url": "https://github.com/wakatime/blender-wakatime/issues",
 }
 
 __version__ = ".".join((f"{n}" for n in bl_info["version"]))
@@ -56,7 +53,6 @@ def activity_handler(_):
 
 def menu(self, _context):
     self.layout.operator(PreferencesDialog.bl_idname)
-    # self.layout.operator(ForceWakatimeDownload.bl_idname)
 
 
 def register():
@@ -66,7 +62,6 @@ def register():
     try:
         log(INFO, "Initializing Wakatime plugin v{}", __version__)
         WakatimeProjectProperties.load_defaults()
-        # bpy.utils.register_class(ForceWakatimeDownload)
         bpy.utils.register_class(WakatimeProjectProperties)
         bpy.utils.register_class(PreferencesDialog)
         bpy.types.TOPBAR_MT_blender_system.append(menu)
@@ -94,7 +89,6 @@ def unregister():
         bpy.app.handlers.load_post.remove(load_handler)
         bpy.app.handlers.save_post.remove(save_handler)
         bpy.app.handlers.depsgraph_update_pre.remove(activity_handler)
-        # bpy.utils.unregister_class(ForceWakatimeDownload)
         bpy.utils.unregister_class(PreferencesDialog)
         heartbeat_queue.shutdown()
         heartbeat_queue.join(heartbeat_queue.POLL_INTERVAL * 3)

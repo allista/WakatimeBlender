@@ -1,7 +1,5 @@
 import os
 import sys
-import shutil
-import ssl
 import threading
 import urllib
 import urllib.error
@@ -13,24 +11,15 @@ import configparser
 import json
 import re
 
-from time import sleep
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple, Tuple
 from zipfile import ZipFile
-from subprocess import STDOUT, PIPE, Popen
+from subprocess import PIPE
 
-import bpy
 from . import settings
 from .log import DEBUG, ERROR, INFO, log
-from .preferences import WakatimeProjectProperties
 
-"""
-Uses lots of code from the Sublime Text addon to add support for the Go wakatime-cli.
-Rest of the code is mostly original from allista/WakatimeBlender
-"""
 
-GITHUB_RELEASES_STABLE_URL = (
-    "https://api.github.com/repos/wakatime/wakatime-cli/releases/latest"
-)
+GITHUB_RELEASES_STABLE_URL = "https://api.github.com/repos/wakatime/wakatime-cli/releases/latest"
 GITHUB_DOWNLOAD_PREFIX = "https://github.com/wakatime/wakatime-cli/releases/download"
 INTERNAL_CONFIG_FILE = os.path.join(settings.USER_HOME, ".wakatime-internal.cfg")
 
@@ -353,6 +342,3 @@ def download(url, filePath):
         urllib.request.urlretrieve(url, filePath)
     except IOError:
         raise
-
-
-# Removed force downloader. Addon still checks on each startup.
